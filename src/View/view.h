@@ -2,6 +2,7 @@
 #define VIEW_H
 
 #include "./ui_view.h"
+#include <QFileDialog>
 //#include <QMainWindow>
 //#include <QtOpenGLWidgets/QOpenGLWidget>
 //#include <QtOpenGL/QOpenGLBuffer>
@@ -18,8 +19,9 @@ class View : public QMainWindow
     Q_OBJECT
 
 public:
-    View(QWidget *parent = nullptr, QOpenGLWidget *gl = nullptr);
+    View(QWidget *parent = nullptr);
     ~View();
+    void openFile();
 
 private:
     Ui::View *ui;
