@@ -19,6 +19,8 @@ set(PROJECT_SOURCES
         view.cpp
         view.h
         view.ui
+        glwidget.h
+        glwidget.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
