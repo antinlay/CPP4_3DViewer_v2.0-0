@@ -1,8 +1,6 @@
 #include "view.h"
 #include "glwidget.h"
 
-//#include <QApplication>
-
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -13,8 +11,7 @@ int main(int argc, char *argv[])
     format.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(format);
 
-    GLWidget widget;
-//    widget.resize(800, 600);
-    widget.show();
+    GLWidget gl;
+//    QObject::connect(&gl, &GLWidget::sendFilePath, &View::uiEventSendFilePath);
     return a.exec();
 }
