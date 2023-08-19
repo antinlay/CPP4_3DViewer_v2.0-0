@@ -12,6 +12,6 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     GLWidget gl;
-//    QObject::connect(&gl, &GLWidget::sendFilePath, &View::uiEventSendFilePath);
+    QObject::connect(&w, &View::uiEventSendFilePath, &gl, &GLWidget::getFilePath);
     return a.exec();
 }

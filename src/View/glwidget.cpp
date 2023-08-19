@@ -4,12 +4,21 @@ GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent) {
     resize(800, 600);
 }
 
+void GLWidget::getFilePath(QString& filePath) {
+    if (!filePath.isEmpty()) {
+        if (!this->isVisible()) {
+            this->show();
+        }
+        filePath_ = filePath;
+    }
+}
+
 void GLWidget::initializeGL() {
   initializeOpenGLFunctions();
   glClearColor(0, 0, 0, 1);
 
   // Load .obj file
-  QFile objFile("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/skull.obj");
+  QFile objFile(filePath_);
   if (!objFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
     qDebug() << "Failed to open .obj file";
     return;

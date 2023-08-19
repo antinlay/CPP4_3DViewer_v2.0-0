@@ -18,6 +18,8 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
  Q_OBJECT
  public:
   GLWidget(QWidget *parent = nullptr);
+  void getFilePath(QString& filePath);
+  QString filePath_ = "";
 
  protected:
   void initializeGL() override;
