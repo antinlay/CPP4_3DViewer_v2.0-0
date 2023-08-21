@@ -23,6 +23,82 @@ void GLWidget::loadGLTextures() {
     initTextures(0, textureImg);
 }
 
+GLuint GLWidget::drawCube() {
+    GLuint num = glGenLists(1);
+    glNewList(num, GL_COMPILE);
+
+    glBegin(GL_QUADS);
+    // front facet
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    // down left
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
+    // down right
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
+    // up right
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+    // up left
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    // back facet
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    // down left
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
+    // down right
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+    // up right
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
+    // up left
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
+
+    // top facet
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    // down left
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+    // down right
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+    // up right
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
+    // up left
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
+
+    // under facet
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    // down left
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+    // down right
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+    // up right
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
+    // up left
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
+
+    // right facet
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    // down left
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
+    // down right
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
+    // up right
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
+    // up left
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+
+    // left facet
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    // down left
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+    // down right
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+    // up right
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+    // up left
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
+    glEnd();
+
+    glEndList();
+    return num;
+}
+
 void GLWidget::initLight() {
     GLfloat lightAmbient[] = { 0, 0, 0, 0.0 };
     GLfloat lightDiffuse[] = { 1.0, 1.0, 1.0, 1.0 };
