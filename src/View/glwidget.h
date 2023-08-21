@@ -1,25 +1,30 @@
 #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
+#define GL_SILENCE_DEPRECATION
 #include <QFile>
-#include <QMatrix4x4>
-#include <QMouseEvent>
-#include <QOpenGLBuffer>
-#include <QOpenGLFunctions>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLVertexArrayObject>
+#include <QTimer>
 #include <QOpenGLWidget>
-#include <QStringList>
-#include <QVector3D>
-#include <QVector>
-#include <QWheelEvent>
 
-class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
+class GLWidget : public QOpenGLWidget {
  Q_OBJECT
  public:
+  QTimer *paintTimer;
+  GLfloat angle = 0;
+  GLuint model[3];
+  GLuint texture[3];
+  GLuint torus = 0;
+
+  GLuint textureCount = 0;
+  GLuint modelCount = 0;
+  void initLight();
+  GLuint drawCube();
+  void loadGLTextures();
+  void initTextures(uint index, QImage &texture);
+  int loadObject(const QString &filename);
+
+ public:
   GLWidget(QWidget *parent = nullptr);
-  void getFilePath(QString& filePath);
-  QString filePath_ = "";
 
  protected:
   void initializeGL() override;
@@ -28,40 +33,7 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   void wheelEvent(QWheelEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;
   void mouseMoveEvent(QMouseEvent *event) override;
-
-private slots:
-//  void sendFilePath(QString &filePath) {}
-
- private:
-  QOpenGLVertexArrayObject vao;
-  QOpenGLBuffer vbo;
-  QOpenGLBuffer ibo;
-  QOpenGLShaderProgram program;
-
-  const char *vertexShaderSource = R"(
-        #version 330 core
-        layout (location = 0) in vec3 position;
-        uniform mat4 modelMatrix;
-        void main()
-        {
-            gl_Position = modelMatrix * vec4(position, 1.0);
-        }
-    )";
-
-  const char *fragmentShaderSource = R"(
-        #version 330 core
-        out vec4 color;
-        void main()
-        {
-            color = vec4(1.0, 1.0, 1.0, 1.0);
-        }
-    )";
-
-  float scale;
-  float rotationX;
-  float rotationY;
-  QVector3D translation;
-  QPoint lastMousePos;
+//  virtual void keyPressEvent(QKeyEvent *event) override;
 };
 
 #endif // GLWIDGET_H
