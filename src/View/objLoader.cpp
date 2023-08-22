@@ -8,18 +8,22 @@ GLuint ObjLoader::load(const QString &filename) {
     QVector<QVector3D>().swap(normals);
     QVector<Facet>().swap(facets);
 
-    QFile in(filename);
+    QFile objFile(filename);
 
-    if (!in.open(QFile::ReadOnly | QFile::Text)) {
+    if (!objFile.open(QFile::ReadOnly | QFile::Text)) {
         qDebug() << "File not open";
     }
 
-    char buff[256];
+    QTextStream in(&objFile);
 
     while(!in.atEnd()) {
-        in.readLine(buff, 256);
-        if (buff[0] == 'v') {
-            coord.push_back(buff);
+        QString line = in.readLine().trimmed();
+        QStringList tokens = line.split(' ');
+
+        if (tokens.isEmpty() || tokens.size() < 4) {continue;}
+
+        if (tokens[0] == "v") {
+
         }
     }
 
