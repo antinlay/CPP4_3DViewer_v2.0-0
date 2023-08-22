@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
         view.ui
         glwidget.h
         glwidget.cpp
+        objLoader.h
+        objLoader.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
