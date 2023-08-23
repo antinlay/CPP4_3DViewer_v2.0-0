@@ -45,7 +45,6 @@ protected:
         QMatrix4x4 projectionMatrix;
         projectionMatrix.perspective(45.0f, width() / height(), 0.1f, 100.0f);
 
-        QMatrix4x4 viewMatrix;
         viewMatrix.translate(0.0f, 0.0f, -3.0f);
         viewMatrix.rotate(rotationX, 1.0f, 0.0f, 0.0f);
         viewMatrix.rotate(rotationY, 0.0f, 1.0f, 0.0f);
@@ -202,19 +201,51 @@ protected:
         lastMousePosition = event->pos();
     }
 
+    void changeSceneScale(qreal scaleFactor)
+    {
+        // Изменяем масштаб в матрице вида
+        viewMatrix.scale(scaleFactor);
+
+        // Перерисовываем виджет
+        update();
+    }
+
+    void wheelEvent(QWheelEvent *event) override
+    {
+        // Получаем значение прокрутки колесика мыши
+        int delta = event->angleDelta().y();
+
+        // Определяем коэффициент масштабирования
+        qreal scaleFactor = 1.0;
+        if (delta > 0)
+        {
+            // Увеличиваем масштаб при прокрутке вперед
+            scaleFactor = 1.1;
+        }
+        else if (delta < 0)
+        {
+            // Уменьшаем масштаб при прокрутке назад
+            scaleFactor = 0.9;
+        }
+
+        // Изменяем масштаб сцены
+        changeSceneScale(scaleFactor);
+    }
+
 private:
-    QOpenGLBuffer vertexBuffer;
-    QOpenGLBuffer normalBuffer;
-    QOpenGLBuffer textureCoordBuffer;
+    QMatrix4x4 viewMatrix {};
+    QOpenGLBuffer vertexBuffer {};
+    QOpenGLBuffer normalBuffer {};
+    QOpenGLBuffer textureCoordBuffer {};
 
-    QVector<QVector3D> vertices;
-    QVector<QVector3D> normals;
-    QVector<QVector2D> textureCoords;
+    QVector<QVector3D> vertices {};
+    QVector<QVector3D> normals {};
+    QVector<QVector2D> textureCoords {};
 
-    QPoint lastMousePosition;
-    GLfloat rotationX;
-    GLfloat rotationY;
-    GLfloat rotationZ;
+    QPoint lastMousePosition {};
+    GLfloat rotationX = 0;
+    GLfloat rotationY = 0;
+    GLfloat rotationZ = 0;
 
     const QString vertexShaderSource = R"(
         attribute highp vec4 vertexPosition;
