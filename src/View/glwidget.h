@@ -15,25 +15,23 @@
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
 public:
-    GLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent)
-    {
+    GLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent) {
         rotationX = 0.0f;
         rotationY = 0.0f;
         rotationZ = 0.0f;
     }
 
 protected:
-    void initializeGL() override
-    {
+    void initializeGL() override {
         initializeOpenGLFunctions();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         loadObjFile("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/Dragon.obj");
+        rotationCenter = QVector3D(0, 0, 0);
     }
 
-    void paintGL() override
-    {
+    void paintGL() override {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         QOpenGLShaderProgram shaderProgram;
@@ -45,7 +43,8 @@ protected:
         QMatrix4x4 projectionMatrix;
         projectionMatrix.perspective(45.0f, width() / height(), 0.1f, 100.0f);
 
-        viewMatrix.translate(0.0f, 0.0f, -3.0f);
+        QMatrix4x4 viewMatrix;
+        viewMatrix.translate(trX, trY, trZ);
         viewMatrix.rotate(rotationX, 1.0f, 0.0f, 0.0f);
         viewMatrix.rotate(rotationY, 0.0f, 1.0f, 0.0f);
         viewMatrix.rotate(rotationZ, 0.0f, 0.0f, 1.0f);
@@ -60,7 +59,6 @@ protected:
         normalBuffer.bind();
         shaderProgram.setAttributeBuffer("vertexNormal", GL_FLOAT, 0, 3);
         shaderProgram.enableAttributeArray("vertexNormal");
-
         textureCoordBuffer.bind();
         shaderProgram.setAttributeBuffer("textureCoord", GL_FLOAT, 0, 2);
         shaderProgram.enableAttributeArray("textureCoord");
@@ -82,8 +80,7 @@ protected:
         glViewport(0, 0, w, h);
     }
 
-    void loadObjFile(const QString& filePath)
-    {
+    void loadObjFile(const QString& filePath) {
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
             return;
@@ -123,7 +120,7 @@ protected:
             }
             else if (tokens[0] == "f")
             {
-                qDebug() << "Tokens: " << tokens.size() - 1 << " " << tokens[1];
+//                qDebug() << "Tokens: " << tokens.size() - 1 << " " << tokens[1];
                 for (int i = 1; i <= tokens.size() - 1; ++i)
                 {
                     QStringList faceTokens = tokens[i].split('/');
@@ -159,8 +156,7 @@ protected:
         initializeBuffers();
     }
 
-    void initializeBuffers()
-    {
+    void initializeBuffers() {
         if (!vertices.isEmpty()) {
             qDebug() << "vertic: " << vertices.size();
             vertexBuffer.create();
@@ -181,31 +177,34 @@ protected:
         }
     }
 
-    void mousePressEvent(QMouseEvent *event) override
-    {
+    void mousePressEvent(QMouseEvent *event) override {
         lastMousePosition = event->pos();
     }
 
-    void mouseMoveEvent(QMouseEvent *event) override
-    {
+    void mouseMoveEvent(QMouseEvent *event) override {
         int dx = event->position().x() - lastMousePosition.x();
         int dy = event->position().y() - lastMousePosition.y();
 
         if (event->buttons() & Qt::LeftButton)
         {
-            rotationX += dy * 0.5f;
-            rotationY += dx * 0.5f;
+            // Вычисляем расстояние между точкой вращения и камерой
+//            float distance = (trZ * QVector4D(rotationCenter, 1.0f)).z();
+//            qDebug() << "distance: " << distance;
+            // Вычисляем углы поворота с учетом отдаления сцены
+            float rotationFactor = trZ * 0.25f;
+
+            rotationX += dy * rotationFactor;
+            rotationY += dx * rotationFactor;
             update();
         }
 
         lastMousePosition = event->pos();
     }
 
-    void changeSceneScale(qreal scaleFactor)
-    {
+    void changeSceneScale(qreal scaleFactor){
         // Изменяем масштаб в матрице вида
-        viewMatrix.scale(scaleFactor);
-
+        trZ += scaleFactor;
+//        qDebug() << trZ;
         // Перерисовываем виджет
         update();
     }
@@ -220,12 +219,12 @@ protected:
         if (delta > 0)
         {
             // Увеличиваем масштаб при прокрутке вперед
-            scaleFactor = 1.1;
+            scaleFactor = 0.1;
         }
         else if (delta < 0)
         {
             // Уменьшаем масштаб при прокрутке назад
-            scaleFactor = 0.9;
+            scaleFactor = -0.1;
         }
 
         // Изменяем масштаб сцены
@@ -233,7 +232,9 @@ protected:
     }
 
 private:
-    QMatrix4x4 viewMatrix {};
+    float trX= 0.0f, trY = 0.0f, trZ = -3.0f;
+//    QMatrix4x4 viewMatrix {};
+    QVector3D rotationCenter {};
     QOpenGLBuffer vertexBuffer {};
     QOpenGLBuffer normalBuffer {};
     QOpenGLBuffer textureCoordBuffer {};
