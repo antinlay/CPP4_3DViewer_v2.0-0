@@ -1,5 +1,4 @@
 #include "glwidget.h"
-#include <QOpenGLFunctions>
 
 GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent) {
   resize(800, 600);
@@ -21,7 +20,28 @@ void GLWidget::loadGLTextures() {
     QImage textureImg;
     textureImg.load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/BUMP_1K.jpg");
     initTextures(0, textureImg);
+
+    textureImg.load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/BUMP_1K.jpg");
+    initTextures(1, textureImg);
+
+    textureImg.load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/BUMP_1K.jpg");
+    initTextures(2, textureImg);
 }
+
+void GLWidget::keyPressEvent(QKeyEvent *event) {
+    if (event->key()==Qt::Key_F) {
+        ++textureCount%=3;
+    }
+    if (event->key()==Qt::Key_S) {
+        if (paintTimer->isActive()) paintTimer->stop();
+        else paintTimer->start();
+    }
+    if (event->key()==Qt::Key_M) {
+        ++modelCount%=3;
+    }
+}
+
+
 
 GLuint GLWidget::drawCube() {
     GLuint num = glGenLists(1);
@@ -124,10 +144,10 @@ void GLWidget::initializeGL() {
     glDepthFunc(GL_LESS);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     initLight();
-    model[0] = ObjLoader::instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/Cow.obj");
-    model[1] = ObjLoader::instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/cube.obj");
+    model[0] = objloader::Instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/monkey2.obj");
+    model[1] = objloader::Instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/sidor.obj");
     model[0] = drawCube();
-    torus = ObjLoader::instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/Teddy.obj");
+    torus = objloader::Instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/torus.obj");
 }
 
 void GLWidget::resizeGL(int nWidth, int nHeight) {
@@ -151,7 +171,7 @@ void GLWidget::paintGL() {
     glBindTexture(GL_TEXTURE_2D, texture[2]);
     glTranslatef(0,0,-2.5);
     glDeleteLists(torus, 1);
-    torus = ObjLoader::Instance().draw(angle/100);
+    torus = objloader::Instance().draw(angle/100);
     glCallList(torus);
     glTranslatef(0,0,0.1f);
     glRotatef(angle, 0.0f, 1.0f, 0.0f);

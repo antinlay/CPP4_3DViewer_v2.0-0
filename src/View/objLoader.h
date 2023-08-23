@@ -1,8 +1,10 @@
 #ifndef OBJLOADER_H
 #define OBJLOADER_H
+#define GL_SILENCE_DEPRECATION
 
 #include "OpenGL/gltypes.h"
 #include <QFile>
+#include <QVector3D>
 
 
 class ObjLoader
@@ -24,7 +26,7 @@ public:
          }
     };
 
-    QVector<QString> coord;
+//    QVector<QString> coord;
     QVector<QVector3D> vertex;
     QVector<QVector2D> uvs;
     QVector<QVector3D> normals;

@@ -2,6 +2,8 @@
 #define GLWIDGET_H
 
 #define GL_SILENCE_DEPRECATION
+#include "objLoader.h"
+#include <QOpenGLFunctions>
 #include <QFile>
 #include <QTimer>
 #include <QOpenGLWidget>
@@ -21,7 +23,7 @@ class GLWidget : public QOpenGLWidget {
   GLuint drawCube();
   void loadGLTextures();
   void initTextures(uint index, QImage &texture);
-  int loadObject(const QString &filename);
+//  int loadObject(const QString &filename);
 
  public:
   GLWidget(QWidget *parent = nullptr);
@@ -30,10 +32,9 @@ class GLWidget : public QOpenGLWidget {
   void initializeGL() override;
   void resizeGL(int w, int h) override;
   void paintGL() override;
-  void wheelEvent(QWheelEvent *event) override;
-  void mousePressEvent(QMouseEvent *event) override;
-  void mouseMoveEvent(QMouseEvent *event) override;
-//  virtual void keyPressEvent(QKeyEvent *event) override;
+
+ private:
+  ObjLoader *ol_;
 };
 
 #endif // GLWIDGET_H

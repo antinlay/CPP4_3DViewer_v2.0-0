@@ -21,6 +21,6 @@ void View::openFile() {
     QString fileName = QFileDialog::getOpenFileName(this, "Choose file", QDir::fromNativeSeparators("../../../../Obj"), "Oblect files (*.obj)");
     if (!fileName.isEmpty()) {
       qDebug() << fileName;
-      gl->loadObjFile(fileName);
+//      gl->loadObjFile(fileName);
     }
 }
