@@ -1,6 +1,4 @@
 #include "objLoader.h"
-#include "OpenGL/gl.h"
-#include "QtCore/qdebug.h"
 
 GLuint ObjLoader::load(const QString &filename) {
     QVector<QVector3D>().swap(vertex);
@@ -17,7 +15,8 @@ GLuint ObjLoader::load(const QString &filename) {
     QTextStream in(&objFile);
 
     while(!in.atEnd()) {
-        QString line = in.readLine().trimmed();
+        QString line;
+        line = in.readLine().trimmed();
         QStringList tokens = line.split(' ');
 
         if (tokens.isEmpty() || tokens.size() < 3 || tokens.size() > 4) {

@@ -3,7 +3,10 @@
 #define GL_SILENCE_DEPRECATION
 
 #include "OpenGL/gltypes.h"
+#include "OpenGL/gl.h"
+#include "QtCore/qdebug.h"
 #include <QFile>
+#include <QVector2D>
 #include <QVector3D>
 
 
@@ -42,9 +45,10 @@ public:
 
    public:
     static ObjLoader& Instance() {
-        static ObjLoader singleInstance;
-        return singleInstance;
+        static ObjLoader theSingleInstance;
+        return theSingleInstance;
     }
+
     GLuint load(const QString &filename);
     GLuint draw(GLfloat offset = 0);
 };
