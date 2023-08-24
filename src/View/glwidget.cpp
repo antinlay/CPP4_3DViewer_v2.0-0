@@ -1,182 +1,199 @@
 #include "glwidget.h"
 
-//GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent) {
-//  resize(800, 600);
-//  paintTimer = new QTimer(this);
-//  connect(paintTimer, &QTimer::timeout, this, QOverload<>::of(&GLWidget::repaint));
-//  paintTimer->start();
-//}
+void GLWidget::initializeGL() {
+  initializeOpenGLFunctions();
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  loadObjFile(
+      "/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/Teapot.obj");
+  rotationCenter = QVector3D(0, 0, 0);
+}
 
-//void GLWidget::initTextures(uint index, QImage &textureImg) {
-//    textureImg.convertTo(QImage::Format_RGBA8888);
-//    glBindTexture(GL_TEXTURE_2D, texture[index]);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//    glTexImage2D(GL_TEXTURE_2D, 0, 1, GLsizei(textureImg.width()), GLsizei(textureImg.height()), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureImg.bits());
-//}
+void GLWidget::paintGL() {
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//void GLWidget::loadGLTextures() {
-//    glGenTextures(3, texture);
+  QOpenGLShaderProgram shaderProgram;
+  shaderProgram.addShaderFromSourceCode(QOpenGLShader::Vertex,
+                                        vertexShaderSource);
+  shaderProgram.addShaderFromSourceCode(QOpenGLShader::Fragment,
+                                        fragmentShaderSource);
+  shaderProgram.link();
+  shaderProgram.bind();
 
-//    QImage textureImg;
-//    textureImg.load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/BUMP_1K.jpg");
-//    initTextures(0, textureImg);
+  QMatrix4x4 projectionMatrix;
+  projectionMatrix.perspective(90.0f, width() / height(), 0.1f, 100.0f);
 
-//    textureImg.load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/BUMP_1K.jpg");
-//    initTextures(1, textureImg);
+  QMatrix4x4 viewMatrix;
+  viewMatrix.translate(trX, trY, trZ);
+  viewMatrix.rotate(rotationX, 1.0f, 0.0f, 0.0f);
+  viewMatrix.rotate(rotationY, 0.0f, 1.0f, 0.0f);
+  viewMatrix.rotate(rotationZ, 0.0f, 0.0f, 1.0f);
 
-//    textureImg.load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/BUMP_1K.jpg");
-//    initTextures(2, textureImg);
-//}
+  shaderProgram.setUniformValue("projectionMatrix", projectionMatrix);
+  shaderProgram.setUniformValue("viewMatrix", viewMatrix);
 
-//void GLWidget::keyPressEvent(QKeyEvent *event) {
-//    if (event->key()==Qt::Key_F) {
-//        ++textureCount%=3;
-//    }
-//    if (event->key()==Qt::Key_S) {
-//        if (paintTimer->isActive()) paintTimer->stop();
-//        else paintTimer->start();
-//    }
-//    if (event->key()==Qt::Key_M) {
-//        ++modelCount%=3;
-//    }
-//}
+  vertexBuffer.bind();
+  shaderProgram.setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 3);
+  shaderProgram.enableAttributeArray("vertexPosition");
 
+  normalBuffer.bind();
+  shaderProgram.setAttributeBuffer("vertexNormal", GL_FLOAT, 0, 3);
+  shaderProgram.enableAttributeArray("vertexNormal");
 
+  textureCoordBuffer.bind();
+  shaderProgram.setAttributeBuffer("textureCoord", GL_FLOAT, 0, 2);
+  shaderProgram.enableAttributeArray("textureCoord");
 
-//GLuint GLWidget::drawCube() {
-//    GLuint num = glGenLists(1);
-//    glNewList(num, GL_COMPILE);
+  glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
-//    glBegin(GL_QUADS);
-//    // front facet
-//    glNormal3f(0.0f, 0.0f, 1.0f);
-//    // down left
-//    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
-//    // down right
-//    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
-//    // up right
-//    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
-//    // up left
-//    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+  shaderProgram.disableAttributeArray("vertexPosition");
+  shaderProgram.disableAttributeArray("vertexNormal");
+  shaderProgram.disableAttributeArray("textureCoord");
 
-//    // back facet
-//    glNormal3f(0.0f, 0.0f, -1.0f);
-//    // down left
-//    glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
-//    // down right
-//    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-//    // up right
-//    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
-//    // up left
-//    glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
+  vertexBuffer.release();
+  normalBuffer.release();
+  textureCoordBuffer.release();
+  shaderProgram.release();
+}
 
-//    // top facet
-//    glNormal3f(0.0f, 1.0f, 0.0f);
-//    // down left
-//    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
-//    // down right
-//    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 1.0f, 1.0f);
-//    // up right
-//    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
-//    // up left
-//    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
+void GLWidget::resizeGL(int w, int h) { glViewport(0, 0, w, h); }
 
-//    // under facet
-//    glNormal3f(0.0f, 1.0f, 0.0f);
-//    // down left
-//    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
-//    // down right
-//    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 1.0f, 1.0f);
-//    // up right
-//    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
-//    // up left
-//    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
+void GLWidget::loadObjFile(const QString &filePath) {
+  QFile file(filePath);
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
 
-//    // right facet
-//    glNormal3f(1.0f, 0.0f, 0.0f);
-//    // down left
-//    glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
-//    // down right
-//    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
-//    // up right
-//    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
-//    // up left
-//    glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+  QVector<QVector3D> tempVertices;
+  QVector<QVector3D> tempNormals;
+  QVector<QVector2D> tempTextureCoords;
+  QVector<unsigned int> vertexIndices;
+  QVector<unsigned int> normalIndices;
+  QVector<unsigned int> textureCoordIndices;
 
-//    // left facet
-//    glNormal3f(-1.0f, 0.0f, 0.0f);
-//    // down left
-//    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-//    // down right
-//    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-//    // up right
-//    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
-//    // up left
-//    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
-//    glEnd();
+  QTextStream in(&file);
+  while (!in.atEnd()) {
+    QString line = in.readLine().trimmed();
+    QStringList tokens = line.split(' ');
 
-//    glEndList();
-//    return num;
-//}
+    if (tokens[0] == "v") {
+      float x = tokens[1].toFloat();
+      float y = tokens[2].toFloat();
+      float z = tokens[3].toFloat();
+      tempVertices.append(QVector3D(x, y, z));
+    } else if (tokens[0] == "vn") {
+      float nx = tokens[1].toFloat();
+      float ny = tokens[2].toFloat();
+      float nz = tokens[3].toFloat();
+      tempNormals.append(QVector3D(nx, ny, nz));
+    } else if (tokens[0] == "vt") {
+      float u = tokens[1].toFloat();
+      float v = tokens[2].toFloat();
+      tempTextureCoords.append(QVector2D(u, v));
+    } else if (tokens[0] == "f") {
+      //                qDebug() << "Tokens: " << tokens.size() - 1 << " " <<
+      //                tokens[1];
+      for (int i = 1; i <= tokens.size() - 1; ++i) {
+        QStringList faceTokens = tokens[i].split('/');
 
-//void GLWidget::initLight() {
-//    GLfloat lightAmbient[] = { 0, 0, 0, 0.0 };
-//    GLfloat lightDiffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-//    GLfloat lightPosition[] = { 0.0, 0.0, 2.0, 1.0 };
+        if (faceTokens.size() >= 1) {
+          vertexIndices.append(faceTokens[0].toUInt() - 1);
+        }
+        if (faceTokens.size() >= 2) {
+          textureCoordIndices.append(faceTokens[1].toUInt() - 1);
+        }
+        if (faceTokens.size() == 3) {
+          normalIndices.append(faceTokens[2].toUInt() - 1);
+        }
+      }
+    }
+  }
 
-//    // setup parameters of light
-//    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
-//    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
-//    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+  file.close();
 
-//    // enable of light
-//    glEnable(GL_LIGHTING);
-//    glEnable(GL_LIGHT0);
-//}
+  for (int i = 0; i < vertexIndices.size(); ++i) {
+    if (!tempVertices.isEmpty()) {
+      vertices.append(tempVertices[vertexIndices[i]]);
+    }
+    if (!tempTextureCoords.isEmpty()) {
+      textureCoords.append(tempTextureCoords[textureCoordIndices[i]]);
+    }
+    if (!tempNormals.isEmpty()) {
+      normals.append(tempNormals[normalIndices[i]]);
+    }
+  }
 
-//void GLWidget::initializeGL() {
-//    glEnable(GL_MULTISAMPLE);
-//    loadGLTextures();
-//    glEnable(GL_TEXTURE_2D);
-//    glClearColor(1,1,1,1);
-//    glClearDepth(1.0);
-//    glEnable(GL_DEPTH_TEST);
-//    glDepthFunc(GL_LESS);
-//    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-//    initLight();
-//    model[0] = ObjLoader::Instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/monkey2.obj");
-//    model[1] = ObjLoader::Instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/sidor.obj");
-//    model[2] = drawCube();
-//    torus = ObjLoader::Instance().load("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/torus.obj");
-//}
+  initializeBuffers();
+}
 
-//void GLWidget::resizeGL(int nWidth, int nHeight) {
-//    // setup view point
-//    glViewport(0,0, nWidth, nHeight);
+void GLWidget::initializeBuffers() {
+  if (!vertices.isEmpty()) {
+    qDebug() << "vertic: " << vertices.size();
+    vertexBuffer.create();
+    vertexBuffer.bind();
+    vertexBuffer.allocate(vertices.constData(),
+                          vertices.size() * sizeof(QVector3D));
+  }
+  if (!normals.isEmpty()) {
+    qDebug() << "normals: " << normals.size();
+    normalBuffer.create();
+    normalBuffer.bind();
+    normalBuffer.allocate(normals.constData(),
+                          normals.size() * sizeof(QVector3D));
+  }
+  if (!textureCoords.isEmpty()) {
+    qDebug() << "textureCoords: " << textureCoords.size();
+    textureCoordBuffer.create();
+    textureCoordBuffer.bind();
+    textureCoordBuffer.allocate(textureCoords.constData(),
+                                textureCoords.size() * sizeof(QVector2D));
+  }
+}
 
-//    // init matrix of proection
-////    qreal aspectratio = qreal(nWidth) / qreal(nHeight);
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-////    gluPerspective(90.0, aspectratio, 0.1, 100.0);
+void GLWidget::mousePressEvent(QMouseEvent *event) {
+  lastMousePosition = event->pos();
+}
 
-//    // init matrix model view
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-//}
+void GLWidget::mouseMoveEvent(QMouseEvent *event) {
+  int dx = event->position().x() - lastMousePosition.x();
+  int dy = event->position().y() - lastMousePosition.y();
 
-//void GLWidget::paintGL() {
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    glLoadIdentity();
-//    glBindTexture(GL_TEXTURE_2D, texture[2]);
-//    glTranslatef(0,0,-2.5);
-//    glDeleteLists(torus, 1);
-//    torus = ObjLoader::Instance().draw(angle/100);
-//    glCallList(torus);
-//    glTranslatef(0,0,0.1f);
-//    glRotatef(angle, 0.0f, 1.0f, 0.0f);
-//    glBindTexture(GL_TEXTURE_2D, texture[textureCount]);
-//    glCallList(model[modelCount]);
-//    angle += 0.3f;
-//}
+  if (event->buttons() & Qt::LeftButton) {
+    // Вычисляем расстояние между точкой вращения и камерой
+    //            float distance = (trZ * QVector4D(rotationCenter, 1.0f)).z();
+    //            qDebug() << "distance: " << distance;
+    // Вычисляем углы поворота с учетом отдаления сцены
+    float rotationFactor = trZ * 0.25f;
+
+    rotationX += dy * rotationFactor;
+    rotationY += dx * rotationFactor;
+    update();
+  }
+
+  lastMousePosition = event->pos();
+}
+
+void GLWidget::changeSceneScale(qreal scaleFactor) {
+  // Изменяем масштаб в матрице вида
+  trZ += scaleFactor;
+  //        qDebug() << trZ;
+  // Перерисовываем виджет
+  update();
+}
+
+void GLWidget::wheelEvent(QWheelEvent *event) {
+  // Получаем значение прокрутки колесика мыши
+  int delta = event->angleDelta().y();
+
+  // Определяем коэффициент масштабирования
+  qreal scaleFactor = 1.0;
+  if (delta > 0) {
+    // Увеличиваем масштаб при прокрутке вперед
+    scaleFactor = 0.1;
+  } else if (delta < 0) {
+    // Уменьшаем масштаб при прокрутке назад
+    scaleFactor = -0.1;
+  }
+
+  // Изменяем масштаб сцены
+  changeSceneScale(scaleFactor);
+}
