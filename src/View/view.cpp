@@ -18,6 +18,8 @@ void View::openFile() {
       "Oblect files (*.obj)");
   if (!fileName.isEmpty()) {
     qDebug() << fileName;
-    //      gl->loadObjFile(fileName);
+    gl.getFileName(fileName);
+    gl.reloadObjFile(fileName);
+    gl.show();
   }
 }

@@ -1,12 +1,37 @@
 #include "glwidget.h"
 
+void GLWidget::getFileName(QString &fileName) {
+    fileName_ = fileName;
+}
+
+void GLWidget::reloadObjFile(const QString& filePath) {
+    // Очистить существующие данные
+    clearData();
+    // Загрузить и отобразить новый файл obj
+    loadObjFile(filePath);
+    resize(1920, 1080);
+    // Перерисовать виджет
+    update();
+}
+
+void GLWidget::clearData() {
+    vertices.clear();
+    normals.clear();
+    textureCoords.clear();
+
+    // Очистить буферы OpenGL
+    vertexBuffer.destroy();
+    normalBuffer.destroy();
+    textureCoordBuffer.destroy();
+}
+
 void GLWidget::initializeGL() {
   initializeOpenGLFunctions();
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
-  loadObjFile(
-      "/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/Dragon.obj");
+  loadObjFile(fileName_);
+  qDebug() << fileName_ << " OPA";
   rotationCenter = QVector3D(0, 0, 0);
 }
 
@@ -69,7 +94,7 @@ void GLWidget::resizeGL(int w, int h) { glViewport(0, 0, w, h); }
 
 void GLWidget::loadObjFile(const QString &filePath) {
   QFile file(filePath);
-  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {return;}
 
   QVector<QVector3D> tempVertices;
   QVector<QVector3D> tempNormals;
@@ -103,13 +128,19 @@ void GLWidget::loadObjFile(const QString &filePath) {
       for (int i = 1; i <= tokens.size() - 1; ++i) {
         QStringList faceTokens = tokens[i].split('/');
 
-        if (faceTokens.size() >= 1) {
+        if (faceTokens.size() >= 1 && !faceTokens[0].isEmpty()) {
+            if (faceTokens[0].isEmpty()) {faceTokens[0] = "0";}
+            qDebug() << faceTokens[0];
           vertexIndices.append(faceTokens[0].toUInt() - 1);
         }
-        if (faceTokens.size() >= 2) {
+        if (faceTokens.size() >= 2 && !faceTokens[1].isEmpty()) {
+            if (faceTokens[1].isEmpty()) {faceTokens[1] = "0";}
+            qDebug() << faceTokens[1];
           textureCoordIndices.append(faceTokens[1].toUInt() - 1);
         }
-        if (faceTokens.size() == 3) {
+        if (faceTokens.size() == 3 && !faceTokens[2].isEmpty()) {
+            if (faceTokens[2].isEmpty()) {faceTokens[2] = "0";}
+            qDebug() << faceTokens[0];
           normalIndices.append(faceTokens[2].toUInt() - 1);
         }
       }
@@ -117,7 +148,7 @@ void GLWidget::loadObjFile(const QString &filePath) {
   }
 
   file.close();
-
+  qDebug() << vertexIndices.size();
   for (int i = 0; i < vertexIndices.size(); ++i) {
     if (!tempVertices.isEmpty()) {
       vertices.append(tempVertices[vertexIndices[i]]);

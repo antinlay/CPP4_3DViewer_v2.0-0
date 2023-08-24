@@ -24,6 +24,6 @@ class View : public QMainWindow {
 
  private:
   Ui::View *ui;
-  GLWidget *gl;
+  GLWidget gl;
 };
 #endif  // VIEW_H

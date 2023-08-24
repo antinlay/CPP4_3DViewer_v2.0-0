@@ -18,6 +18,9 @@
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
  public:
   GLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent) {}
+  void getFileName(QString &fileName);
+  void clearData();
+  void reloadObjFile(const QString& filePath);
 
  protected:
   void initializeGL() override;
@@ -31,7 +34,8 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   void wheelEvent(QWheelEvent *event) override;
 
  private:
-  bool dotLine = true;
+  QString fileName_ = "";
+  bool dotLine = false;
   float trX = 0.0f, trY = 0.0f, trZ = -3.0f;
   QVector3D rotationCenter{};
   QOpenGLBuffer vertexBuffer{};
@@ -72,7 +76,8 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
 
         void main()
         {
-            gl_FragColor = vec4(interpolatedNormal, 1.0);
+            vec3 color = (interpolatedNormal + vec3(1.0)) * 0.5;
+            gl_FragColor = vec4(color, 1.0);
         }
     )";
 
