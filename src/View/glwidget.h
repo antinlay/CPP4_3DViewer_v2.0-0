@@ -10,16 +10,14 @@
 #include <QVector3D>
 #include <QtCore/QTextStream>
 #include <QtCore/QVector>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
 
 #include "QtGui/qevent.h"
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
  public:
-  GLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent) {
-    rotationX = 0.0f;
-    rotationY = 0.0f;
-    rotationZ = 0.0f;
-  }
+  GLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent) {}
 
  protected:
   void initializeGL() override;
@@ -45,9 +43,9 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   QVector<QVector2D> textureCoords{};
 
   QPoint lastMousePosition{};
-  GLfloat rotationX = 0;
-  GLfloat rotationY = 0;
-  GLfloat rotationZ = 0;
+  GLfloat rotationX = 0.0f;
+  GLfloat rotationY = 0.0f;
+  GLfloat rotationZ = 0.0f;
 
   const QString vertexShaderSource = R"(
         attribute highp vec4 vertexPosition;
