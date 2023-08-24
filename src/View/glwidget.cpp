@@ -6,7 +6,7 @@ void GLWidget::initializeGL() {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   loadObjFile(
-      "/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/Teapot.obj");
+      "/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/Dragon.obj");
   rotationCenter = QVector3D(0, 0, 0);
 }
 
@@ -22,7 +22,7 @@ void GLWidget::paintGL() {
   shaderProgram.bind();
 
   QMatrix4x4 projectionMatrix;
-  projectionMatrix.perspective(90.0f, width() / height(), 0.1f, 100.0f);
+  projectionMatrix.perspective(45.0f, width() / height(), 0.01f, 500.0f);
 
   QMatrix4x4 viewMatrix;
   viewMatrix.translate(trX, trY, trZ);
@@ -45,7 +45,15 @@ void GLWidget::paintGL() {
   shaderProgram.setAttributeBuffer("textureCoord", GL_FLOAT, 0, 2);
   shaderProgram.enableAttributeArray("textureCoord");
 
-  glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+  if (dotLine) {
+      glPointSize(5.0f);
+      glDrawArrays(GL_POINTS, 0, vertices.size());
+
+      glLineWidth(2.0f);
+      glDrawArrays(GL_LINES, 0, vertices.size());
+  } else {
+      glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+  }
 
   shaderProgram.disableAttributeArray("vertexPosition");
   shaderProgram.disableAttributeArray("vertexNormal");

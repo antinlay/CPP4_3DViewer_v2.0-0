@@ -33,6 +33,7 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   void wheelEvent(QWheelEvent *event) override;
 
  private:
+  bool dotLine = true;
   float trX = 0.0f, trY = 0.0f, trZ = -3.0f;
   QVector3D rotationCenter{};
   QOpenGLBuffer vertexBuffer{};
@@ -49,16 +50,22 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   GLfloat rotationZ = 0;
 
   const QString vertexShaderSource = R"(
-    #version 330 core
+        attribute highp vec4 vertexPosition;
+        attribute highp vec3 vertexNormal;
+        attribute highp vec2 textureCoord;
 
-    layout(location = 0) in vec3 vertexPosition;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 viewMatrix;
 
-    uniform mat4 projectionMatrix;
-    uniform mat4 viewMatrix;
+        varying highp vec3 interpolatedNormal;
+        varying highp vec2 interpolatedTextureCoord;
 
-    void main() {
-        gl_Position = projectionMatrix * viewMatrix * vec4(vertexPosition, 1.0);
-    }
+        void main()
+        {
+            gl_Position = projectionMatrix * viewMatrix * vertexPosition;
+            interpolatedNormal = vertexNormal;
+            interpolatedTextureCoord = textureCoord;
+        }
     )";
 
   const QString fragmentShaderSource = R"(
