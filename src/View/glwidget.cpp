@@ -35,31 +35,28 @@ void GLWidget::initializeGL() {
   rotationCenter = QVector3D(0, 0, 0);
 }
 
+void GLWidget::textureFromImg() {
+    // Загрузка изображения .jpg
+    QImage image("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/GLOSS_1K.jpg");
+    if (image.isNull()) {
+        qDebug() << "Failed to load image";
+        return;
+    }
+    // Создание текстуры из изображения
+//    QOpenGLTexture *m_texture = new QOpenGLTexture(image);
+}
+
 void GLWidget::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // Загрузка изображения .jpg
-  QImage image("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/GLOSS_1K.jpg");
-  if (image.isNull()) {
-      qDebug() << "Failed to load image";
-      return;
-  }
-
   QOpenGLShaderProgram shaderProgram;
-
-  // Создание текстуры из изображения
-  QOpenGLTexture *m_texture = new QOpenGLTexture(image);
-
 
   shaderProgram.addShaderFromSourceCode(QOpenGLShader::Vertex,
                                         vertexShaderSource);
   shaderProgram.addShaderFromSourceCode(QOpenGLShader::Fragment,
                                         fragmentShaderSource);
   shaderProgram.link();
-  // Установка текстуры в шейдер
   shaderProgram.bind();
-  shaderProgram.setUniformValue("texture", 0);
-  m_texture->bind();
 
   QMatrix4x4 projectionMatrix;
   projectionMatrix.perspective(45.0f, width() / height(), 0.01f, 500.0f);
@@ -87,7 +84,7 @@ void GLWidget::paintGL() {
       shaderProgram.enableAttributeArray("textureCoord");
 
       if (dotLine) {
-          glPointSize(5.0f);
+          glPointSize(10.0f);
           glDrawArrays(GL_POINTS, 0, group.vertices.size());
 
           glLineWidth(2.0f);
@@ -104,7 +101,6 @@ void GLWidget::paintGL() {
       normalBuffer.release();
       textureCoordBuffer.release();
   }
-  m_texture->release();
   shaderProgram.release();
 }
 

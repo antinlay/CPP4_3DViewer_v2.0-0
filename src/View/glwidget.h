@@ -28,6 +28,7 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   void getFileName(QString &fileName);
   void clearData();
   void reloadObjFile(const QString& filePath);
+  void textureFromImg();
 
  protected:
   void initializeGL() override;
