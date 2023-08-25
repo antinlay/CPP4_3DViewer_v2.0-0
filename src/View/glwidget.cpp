@@ -38,13 +38,28 @@ void GLWidget::initializeGL() {
 void GLWidget::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  // Загрузка изображения .jpg
+  QImage image("/Users/janiecee/Documents/CPP4_3DViewer_v2.0-0/src/Obj/MetalCladdingFrame002/GLOSS_1K.jpg");
+  if (image.isNull()) {
+      qDebug() << "Failed to load image";
+      return;
+  }
+
   QOpenGLShaderProgram shaderProgram;
+
+  // Создание текстуры из изображения
+  QOpenGLTexture *m_texture = new QOpenGLTexture(image);
+
+
   shaderProgram.addShaderFromSourceCode(QOpenGLShader::Vertex,
                                         vertexShaderSource);
   shaderProgram.addShaderFromSourceCode(QOpenGLShader::Fragment,
                                         fragmentShaderSource);
   shaderProgram.link();
+  // Установка текстуры в шейдер
   shaderProgram.bind();
+  shaderProgram.setUniformValue("texture", 0);
+  m_texture->bind();
 
   QMatrix4x4 projectionMatrix;
   projectionMatrix.perspective(45.0f, width() / height(), 0.01f, 500.0f);
@@ -58,35 +73,38 @@ void GLWidget::paintGL() {
   shaderProgram.setUniformValue("projectionMatrix", projectionMatrix);
   shaderProgram.setUniformValue("viewMatrix", viewMatrix);
 
-  vertexBuffer.bind();
-  shaderProgram.setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 3);
-  shaderProgram.enableAttributeArray("vertexPosition");
+  for (const Group& group : groups) {
+      vertexBuffer.bind();
+      shaderProgram.setAttributeBuffer("vertexPosition", GL_FLOAT, 0, 3);
+      shaderProgram.enableAttributeArray("vertexPosition");
 
-  normalBuffer.bind();
-  shaderProgram.setAttributeBuffer("vertexNormal", GL_FLOAT, 0, 3);
-  shaderProgram.enableAttributeArray("vertexNormal");
+      normalBuffer.bind();
+      shaderProgram.setAttributeBuffer("vertexNormal", GL_FLOAT, 0, 3);
+      shaderProgram.enableAttributeArray("vertexNormal");
 
-  textureCoordBuffer.bind();
-  shaderProgram.setAttributeBuffer("textureCoord", GL_FLOAT, 0, 2);
-  shaderProgram.enableAttributeArray("textureCoord");
+      textureCoordBuffer.bind();
+      shaderProgram.setAttributeBuffer("textureCoord", GL_FLOAT, 0, 2);
+      shaderProgram.enableAttributeArray("textureCoord");
 
-  if (dotLine) {
-      glPointSize(5.0f);
-      glDrawArrays(GL_POINTS, 0, vertices.size());
+      if (dotLine) {
+          glPointSize(5.0f);
+          glDrawArrays(GL_POINTS, 0, group.vertices.size());
 
-      glLineWidth(2.0f);
-      glDrawArrays(GL_LINES, 0, vertices.size());
-  } else {
-      glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+          glLineWidth(2.0f);
+          glDrawArrays(GL_LINES, 0, group.vertices.size());
+      } else {
+          glDrawArrays(GL_TRIANGLES, 0, group.vertices.size());
+      }
+
+      shaderProgram.disableAttributeArray("vertexPosition");
+      shaderProgram.disableAttributeArray("vertexNormal");
+      shaderProgram.disableAttributeArray("textureCoord");
+
+      vertexBuffer.release();
+      normalBuffer.release();
+      textureCoordBuffer.release();
   }
-
-  shaderProgram.disableAttributeArray("vertexPosition");
-  shaderProgram.disableAttributeArray("vertexNormal");
-  shaderProgram.disableAttributeArray("textureCoord");
-
-  vertexBuffer.release();
-  normalBuffer.release();
-  textureCoordBuffer.release();
+  m_texture->release();
   shaderProgram.release();
 }
 
@@ -96,12 +114,13 @@ void GLWidget::loadObjFile(const QString &filePath) {
   QFile file(filePath);
   if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {return;}
 
+  Group currentGroup;
   QVector<QVector3D> tempVertices;
   QVector<QVector3D> tempNormals;
   QVector<QVector2D> tempTextureCoords;
-  QVector<unsigned int> vertexIndices;
-  QVector<unsigned int> normalIndices;
-  QVector<unsigned int> textureCoordIndices;
+  QVector<GLuint> vertexIndices;
+  QVector<GLuint> normalIndices;
+  QVector<GLuint> textureCoordIndices;
 
   QTextStream in(&file);
   while (!in.atEnd()) {
@@ -123,69 +142,75 @@ void GLWidget::loadObjFile(const QString &filePath) {
       float v = tokens[2].toFloat();
       tempTextureCoords.append(QVector2D(u, v));
     } else if (tokens[0] == "f") {
-      //                qDebug() << "Tokens: " << tokens.size() - 1 << " " <<
-      //                tokens[1];
       for (int i = 1; i <= tokens.size() - 1; ++i) {
-        QStringList faceTokens = tokens[i].split('/');
-
+        QStringList faceTokens = tokens[i].split("/");
         if (faceTokens.size() >= 1 && !faceTokens[0].isEmpty()) {
-            if (faceTokens[0].isEmpty()) {faceTokens[0] = "0";}
-            qDebug() << faceTokens[0];
-          vertexIndices.append(faceTokens[0].toUInt() - 1);
+          int v = (faceTokens[0].toInt() < 0) ? abs(faceTokens[0].toInt()) : faceTokens[0].toInt();
+          vertexIndices.append(v - 1);
         }
         if (faceTokens.size() >= 2 && !faceTokens[1].isEmpty()) {
-            if (faceTokens[1].isEmpty()) {faceTokens[1] = "0";}
-            qDebug() << faceTokens[1];
-          textureCoordIndices.append(faceTokens[1].toUInt() - 1);
+          int v = (faceTokens[1].toInt() < 0) ? abs(faceTokens[1].toInt()) : faceTokens[1].toInt();
+          textureCoordIndices.append(v - 1);
         }
         if (faceTokens.size() == 3 && !faceTokens[2].isEmpty()) {
-            if (faceTokens[2].isEmpty()) {faceTokens[2] = "0";}
-            qDebug() << faceTokens[0];
-          normalIndices.append(faceTokens[2].toUInt() - 1);
+          int v = (faceTokens[2].toInt() < 0) ? abs(faceTokens[2].toInt()) : faceTokens[2].toInt();
+          normalIndices.append(v - 1);
         }
       }
+    } else if (tokens[0] == "g") {
+        if (!tempVertices.isEmpty()) {
+            groups.append(currentGroup);
+            currentGroup = Group();
+        }
     }
   }
 
   file.close();
+
   qDebug() << vertexIndices.size();
   for (int i = 0; i < vertexIndices.size(); ++i) {
     if (!tempVertices.isEmpty()) {
-      vertices.append(tempVertices[vertexIndices[i]]);
+      currentGroup.vertices.append(tempVertices[vertexIndices[i]]);
     }
     if (!tempTextureCoords.isEmpty()) {
-      textureCoords.append(tempTextureCoords[textureCoordIndices[i]]);
+      currentGroup.textureCoords.append(tempTextureCoords[textureCoordIndices[i]]);
     }
     if (!tempNormals.isEmpty()) {
-      normals.append(tempNormals[normalIndices[i]]);
+      currentGroup.normals.append(tempNormals[normalIndices[i]]);
     }
+  }
+
+  if (!currentGroup.vertices.isEmpty()) {
+      groups.append(currentGroup);
   }
 
   initializeBuffers();
 }
 
 void GLWidget::initializeBuffers() {
-  if (!vertices.isEmpty()) {
-    qDebug() << "vertic: " << vertices.size();
-    vertexBuffer.create();
-    vertexBuffer.bind();
-    vertexBuffer.allocate(vertices.constData(),
-                          vertices.size() * sizeof(QVector3D));
-  }
-  if (!normals.isEmpty()) {
-    qDebug() << "normals: " << normals.size();
-    normalBuffer.create();
-    normalBuffer.bind();
-    normalBuffer.allocate(normals.constData(),
-                          normals.size() * sizeof(QVector3D));
-  }
-  if (!textureCoords.isEmpty()) {
-    qDebug() << "textureCoords: " << textureCoords.size();
-    textureCoordBuffer.create();
-    textureCoordBuffer.bind();
-    textureCoordBuffer.allocate(textureCoords.constData(),
-                                textureCoords.size() * sizeof(QVector2D));
-  }
+for (Group& group : groups) {
+      if (!group.vertices.isEmpty()) {
+        qDebug() << "vertic: " << group.vertices.size();
+        vertexBuffer.create();
+        vertexBuffer.bind();
+        vertexBuffer.allocate(group.vertices.constData(),
+                              group.vertices.size() * sizeof(QVector3D));
+      }
+      if (!group.normals.isEmpty()) {
+        qDebug() << "normals: " << group.normals.size();
+        normalBuffer.create();
+        normalBuffer.bind();
+        normalBuffer.allocate(group.normals.constData(),
+                              group.normals.size() * sizeof(QVector3D));
+      }
+      if (!group.textureCoords.isEmpty()) {
+        qDebug() << "textureCoords: " << group.textureCoords.size();
+        textureCoordBuffer.create();
+        textureCoordBuffer.bind();
+        textureCoordBuffer.allocate(group.textureCoords.constData(),
+                                    group.textureCoords.size() * sizeof(QVector2D));
+      }
+}
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event) {

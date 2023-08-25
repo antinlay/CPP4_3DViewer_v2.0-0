@@ -10,6 +10,7 @@
 #include <QVector3D>
 #include <QtCore/QTextStream>
 #include <QtCore/QVector>
+#include <QOpenGLTexture>
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 
@@ -18,6 +19,12 @@
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
  public:
   GLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent) {}
+  struct Group {
+      QVector<QVector3D> vertices;
+      QVector<QVector3D> normals;
+      QVector<QVector2D> textureCoords;
+  };
+
   void getFileName(QString &fileName);
   void clearData();
   void reloadObjFile(const QString& filePath);
@@ -34,7 +41,8 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   void wheelEvent(QWheelEvent *event) override;
 
  private:
-  QString fileName_ = "";
+  QVector<Group> groups{};
+  QString fileName_{};
   bool dotLine = false;
   float trX = 0.0f, trY = 0.0f, trZ = -3.0f;
   QVector3D rotationCenter{};
