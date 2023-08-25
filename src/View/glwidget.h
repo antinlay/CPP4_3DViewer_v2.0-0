@@ -61,35 +61,53 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   GLfloat rotationZ = 0.0f;
 
   const QString vertexShaderSource = R"(
-        attribute highp vec4 vertexPosition;
-        attribute highp vec3 vertexNormal;
-        attribute highp vec2 textureCoord;
+          attribute highp vec4 vertexPosition;
+          attribute highp vec3 vertexNormal;
+          attribute highp vec2 textureCoord;
 
-        uniform highp mat4 projectionMatrix;
-        uniform highp mat4 viewMatrix;
+          uniform highp mat4 projectionMatrix;
+          uniform highp mat4 viewMatrix;
+          uniform vec3 fixedLightPosition; // Добавляем позицию фиксированного источника света
 
-        varying highp vec3 interpolatedNormal;
-        varying highp vec2 interpolatedTextureCoord;
+          varying highp vec3 interpolatedNormal;
+          varying highp vec2 interpolatedTextureCoord;
 
-        void main()
-        {
-            gl_Position = projectionMatrix * viewMatrix * vertexPosition;
-            interpolatedNormal = vertexNormal;
-            interpolatedTextureCoord = textureCoord;
-        }
-    )";
+          void main()
+          {
+              gl_Position = projectionMatrix * viewMatrix * vertexPosition;
+              interpolatedNormal = vertexNormal;
+              interpolatedTextureCoord = textureCoord;
+
+              // Передаем фиксированную позицию источника света во фрагментный шейдер
+              vec4 fixedLightPositionInViewSpace = viewMatrix * vec4(fixedLightPosition, 1.0);
+              gl_Position = projectionMatrix * viewMatrix * vertexPosition;
+              interpolatedNormal = vertexNormal;
+              interpolatedTextureCoord = textureCoord;
+          }
+      )";
 
   const QString fragmentShaderSource = R"(
-        varying highp vec3 interpolatedNormal;
-        varying highp vec2 interpolatedTextureCoord;
+            varying highp vec3 interpolatedNormal;
+            varying highp vec2 interpolatedTextureCoord;
+            uniform vec3 fixedLightPosition; // Добавляем фиксированную позицию источника света
 
-        void main()
-        {
-            vec3 color = (interpolatedNormal + vec3(1.0)) * 0.5;
-            gl_FragColor = vec4(color, 1.0);
-        }
-    )";
+            void main()
+            {
+                vec3 lightDirection = normalize(fixedLightPosition - gl_FragCoord.xyz); // Используем фиксированную позицию источника света
+                vec3 normal = normalize(interpolatedNormal);
 
+                float lightIntensity = dot(normal, lightDirection);
+
+                lightIntensity = clamp(lightIntensity, 0.5, 1.0);
+
+                vec3 objectColor = vec3(1.0, 0.9, 1.0);
+
+                float shadowIntensity = 0.9;
+                vec3 color = objectColor * lightIntensity * shadowIntensity;
+
+                gl_FragColor = vec4(color, 1.0);
+            }
+        )";
 };
 
 #endif  // GLWIDGET_H
