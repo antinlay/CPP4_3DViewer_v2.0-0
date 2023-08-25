@@ -13,6 +13,7 @@
 #include <QOpenGLTexture>
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
+#include "/opt/goinfre/janiecee/Projects/tinyobjloader/tiny_obj_loader.h"
 
 #include "QtGui/qevent.h"
 
@@ -23,12 +24,17 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
       QVector<QVector3D> vertices;
       QVector<QVector3D> normals;
       QVector<QVector2D> textureCoords;
+//      QVector<GLuint> vertexIndices;
+//      QVector<GLuint> normalIndices;
+//      QVector<GLuint> textureCoordIndices;
   };
-
+  float getWidth(const QVector<QVector3D>& vertices);
+  float getHeight(const QVector<QVector3D>& vertices);
   void getFileName(QString &fileName);
   void clearData();
   void reloadObjFile(const QString& filePath);
   void textureFromImg();
+  void normalizeObject(QMatrix4x4 &projectionMatrix, QVector<Group> &groups, QOpenGLShaderProgram &shaderProgram);
 
  protected:
   void initializeGL() override;
@@ -50,10 +56,6 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   QOpenGLBuffer vertexBuffer{};
   QOpenGLBuffer normalBuffer{};
   QOpenGLBuffer textureCoordBuffer{};
-
-  QVector<QVector3D> vertices{};
-  QVector<QVector3D> normals{};
-  QVector<QVector2D> textureCoords{};
 
   QPoint lastMousePosition{};
   GLfloat rotationX = 0.0f;

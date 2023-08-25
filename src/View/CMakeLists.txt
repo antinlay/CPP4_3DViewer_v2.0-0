@@ -11,7 +11,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(ASSIMP_INCLUDE_DIRS "/usr/local/include/assimp")
+add_subdirectory(tinyobjloader)
+include_directories(tinyobjloader)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets OpenGLWidgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets OpenGLWidgets)
@@ -49,7 +50,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(View PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::OpenGLWidgets)
+target_link_libraries(View PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::OpenGLWidgets tinyobjloader)
 
 set_target_properties(View PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

@@ -4,6 +4,40 @@ void GLWidget::getFileName(QString &fileName) {
     fileName_ = fileName;
 }
 
+float GLWidget::getWidth(const QVector<QVector3D>& vertices) {
+    float minX = vertices[0].x();
+    float maxX = vertices[0].x();
+
+    for (int i = 1; i < vertices.size(); ++i) {
+        float x = vertices[i].x();
+        if (x < minX) {
+            minX = x;
+        }
+        if (x > maxX) {
+            maxX = x;
+        }
+    }
+
+    return maxX - minX;
+}
+
+float GLWidget::getHeight(const QVector<QVector3D>& vertices) {
+    float minY = vertices[0].y();
+    float maxY = vertices[0].y();
+
+    for (int i = 1; i < vertices.size(); ++i) {
+        float y = vertices[i].y();
+        if (y < minY) {
+            minY = y;
+        }
+        if (y > maxY) {
+            maxY = y;
+        }
+    }
+
+    return maxY - minY;
+}
+
 void GLWidget::reloadObjFile(const QString& filePath) {
     // Очистить существующие данные
     clearData();
@@ -15,10 +49,7 @@ void GLWidget::reloadObjFile(const QString& filePath) {
 }
 
 void GLWidget::clearData() {
-    vertices.clear();
-    normals.clear();
-    textureCoords.clear();
-
+    groups.clear();
     // Очистить буферы OpenGL
     vertexBuffer.destroy();
     normalBuffer.destroy();
@@ -46,6 +77,33 @@ void GLWidget::textureFromImg() {
 //    QOpenGLTexture *m_texture = new QOpenGLTexture(image);
 }
 
+void GLWidget::normalizeObject(QMatrix4x4 &projectionMatrix, QVector<Group> &groups, QOpenGLShaderProgram &shaderProgram) {
+    // Получаем размеры окна
+    int windowWidth = width();
+    int windowHeight = height();
+
+    // Получаем размеры объекта
+    float objectWidth = getWidth(groups.begin()->vertices); // Замените на соответствующий размер объекта
+    float objectHeight = getHeight(groups.begin()->vertices); // Замените на соответствующий размер объекта
+
+    // Вычисляем масштаб для нормализации объекта
+    float scaleX = windowWidth / objectWidth;
+    float scaleY = windowHeight / objectHeight;
+    float scale = std::min(scaleX, scaleY);
+
+    // Вычисляем смещение для центрирования объекта в окне
+    float offsetX = (windowWidth - objectWidth * scale) / 2.0f;
+    float offsetY = (windowHeight - objectHeight * scale) / 2.0f;
+
+    // Применяем масштабирование и смещение к матрице проекции
+//    projectionMatrix.ortho(0, windowWidth, 0, windowHeight, -1, 1);
+    projectionMatrix.scale(scale);
+    projectionMatrix.translate(offsetX, offsetY);
+
+    // Устанавливаем матрицу проекции для отображения
+    shaderProgram.setUniformValue("projectionMatrix", projectionMatrix);
+}
+
 void GLWidget::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -60,6 +118,7 @@ void GLWidget::paintGL() {
 
   QMatrix4x4 projectionMatrix;
   projectionMatrix.perspective(45.0f, width() / height(), 0.01f, 500.0f);
+//  normalizeObject(projectionMatrix, groups, shaderProgram);
 
   QMatrix4x4 viewMatrix;
   viewMatrix.translate(trX, trY, trZ);
@@ -84,9 +143,6 @@ void GLWidget::paintGL() {
       shaderProgram.enableAttributeArray("textureCoord");
 
       if (dotLine) {
-          glPointSize(10.0f);
-          glDrawArrays(GL_POINTS, 0, group.vertices.size());
-
           glLineWidth(2.0f);
           glDrawArrays(GL_LINES, 0, group.vertices.size());
       } else {
@@ -107,80 +163,53 @@ void GLWidget::paintGL() {
 void GLWidget::resizeGL(int w, int h) { glViewport(0, 0, w, h); }
 
 void GLWidget::loadObjFile(const QString &filePath) {
-  QFile file(filePath);
-  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {return;}
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
 
-  Group currentGroup;
-  QVector<QVector3D> tempVertices;
-  QVector<QVector3D> tempNormals;
-  QVector<QVector2D> tempTextureCoords;
-  QVector<GLuint> vertexIndices;
-  QVector<GLuint> normalIndices;
-  QVector<GLuint> textureCoordIndices;
+    std::string warn;
+    std::string err;
+    bool success = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.toStdString().c_str());
 
-  QTextStream in(&file);
-  while (!in.atEnd()) {
-    QString line = in.readLine().trimmed();
-    QStringList tokens = line.split(' ');
+    if (!err.empty()) {
+        return;
+    }
 
-    if (tokens[0] == "v") {
-      float x = tokens[1].toFloat();
-      float y = tokens[2].toFloat();
-      float z = tokens[3].toFloat();
-      tempVertices.append(QVector3D(x, y, z));
-    } else if (tokens[0] == "vn") {
-      float nx = tokens[1].toFloat();
-      float ny = tokens[2].toFloat();
-      float nz = tokens[3].toFloat();
-      tempNormals.append(QVector3D(nx, ny, nz));
-    } else if (tokens[0] == "vt") {
-      float u = tokens[1].toFloat();
-      float v = tokens[2].toFloat();
-      tempTextureCoords.append(QVector2D(u, v));
-    } else if (tokens[0] == "f") {
-      for (int i = 1; i <= tokens.size() - 1; ++i) {
-        QStringList faceTokens = tokens[i].split("/");
-        if (faceTokens.size() >= 1 && !faceTokens[0].isEmpty()) {
-          int v = (faceTokens[0].toInt() < 0) ? abs(faceTokens[0].toInt()) : faceTokens[0].toInt();
-          vertexIndices.append(v - 1);
-        }
-        if (faceTokens.size() >= 2 && !faceTokens[1].isEmpty()) {
-          int v = (faceTokens[1].toInt() < 0) ? abs(faceTokens[1].toInt()) : faceTokens[1].toInt();
-          textureCoordIndices.append(v - 1);
-        }
-        if (faceTokens.size() == 3 && !faceTokens[2].isEmpty()) {
-          int v = (faceTokens[2].toInt() < 0) ? abs(faceTokens[2].toInt()) : faceTokens[2].toInt();
-          normalIndices.append(v - 1);
-        }
-      }
-    } else if (tokens[0] == "g") {
-        if (!tempVertices.isEmpty()) {
-            groups.append(currentGroup);
-            currentGroup = Group();
+    if (!success) {
+        return;
+    }
+
+    Group currentGroup;
+    // Заполнение временных векторов данными из TinyObjLoader
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            if (index.vertex_index >= 0) {
+                float x = attrib.vertices[3 * index.vertex_index + 0];
+                float y = attrib.vertices[3 * index.vertex_index + 1];
+                float z = attrib.vertices[3 * index.vertex_index + 2];
+                currentGroup.vertices.append(QVector3D(x, y, z));
+            }
+
+            if (index.normal_index >= 0) {
+                float nx = attrib.normals[3 * index.normal_index + 0];
+                float ny = attrib.normals[3 * index.normal_index + 1];
+                float nz = attrib.normals[3 * index.normal_index + 2];
+                currentGroup.normals.append(QVector3D(nx, ny, nz));
+            }
+
+            if (index.texcoord_index >= 0) {
+                float u = attrib.texcoords[2 * index.texcoord_index + 0];
+                float v = attrib.texcoords[2 * index.texcoord_index + 1];
+                currentGroup.textureCoords.append(QVector2D(u, v));
+            }
         }
     }
-  }
 
-  file.close();
-
-  qDebug() << vertexIndices.size();
-  for (int i = 0; i < vertexIndices.size(); ++i) {
-    if (!tempVertices.isEmpty()) {
-      currentGroup.vertices.append(tempVertices[vertexIndices[i]]);
+    if (!currentGroup.vertices.isEmpty()) {
+        groups.append(currentGroup);
     }
-    if (!tempTextureCoords.isEmpty()) {
-      currentGroup.textureCoords.append(tempTextureCoords[textureCoordIndices[i]]);
-    }
-    if (!tempNormals.isEmpty()) {
-      currentGroup.normals.append(tempNormals[normalIndices[i]]);
-    }
-  }
 
-  if (!currentGroup.vertices.isEmpty()) {
-      groups.append(currentGroup);
-  }
-
-  initializeBuffers();
+    initializeBuffers();
 }
 
 void GLWidget::initializeBuffers() {
@@ -248,10 +277,10 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
   qreal scaleFactor = 1.0;
   if (delta > 0) {
     // Увеличиваем масштаб при прокрутке вперед
-    scaleFactor = 0.1;
+    scaleFactor = 1;
   } else if (delta < 0) {
     // Уменьшаем масштаб при прокрутке назад
-    scaleFactor = -0.1;
+    scaleFactor = -10;
   }
 
   // Изменяем масштаб сцены
