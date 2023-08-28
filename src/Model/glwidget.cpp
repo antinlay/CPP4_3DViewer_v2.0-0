@@ -63,7 +63,11 @@ void GLWidget::initializeGL() {
   glEnable(GL_CULL_FACE);
   loadObjFile(fileName_);
   qDebug() << fileName_ << " OPA";
-  rotationCenter = QVector3D(0, 0, 0);
+  frontLightPosition = QVector3D(1.0f, 1.0f, 1.0f);
+  backLightPosition = QVector3D(-1.0f, -1.0f, -1.0f);
+  if (!groups.isEmpty()) {
+      rotationCenter = groups[0].center;
+  }
 }
 
 void GLWidget::textureFromImg() {
@@ -128,6 +132,9 @@ void GLWidget::paintGL() {
 
   shaderProgram.setUniformValue("projectionMatrix", projectionMatrix);
   shaderProgram.setUniformValue("viewMatrix", viewMatrix);
+  shaderProgram.setUniformValue("frontLightPosition", frontLightPosition);
+  shaderProgram.setUniformValue("backLightPosition", backLightPosition);
+  shaderProgram.setUniformValue("rotationCenter", rotationCenter);
 
   for (const Group& group : groups) {
       vertexBuffer.bind();
@@ -143,6 +150,18 @@ void GLWidget::paintGL() {
       shaderProgram.enableAttributeArray("textureCoord");
 
       if (dotLine) {
+          // Создание и заполнение буфера индексов
+//          QOpenGLBuffer indexBuffer;
+//          indexBuffer.create();
+//          indexBuffer.bind();
+//          indexBuffer.allocate(group.indices.data(), group.indices.size() * sizeof(GLuint));
+
+          // Отрисовка с использованием буфера индексов
+//          glDrawElements(GL_LINES, group.indices.size(), GL_UNSIGNED_INT, 0);
+
+          // Освобождение буфера индексов
+//          indexBuffer.release();
+//          indexBuffer.destroy();
           glLineWidth(2.0f);
           glDrawArrays(GL_LINES, 0, group.vertices.size());
       } else {
@@ -202,8 +221,17 @@ void GLWidget::loadObjFile(const QString &filePath) {
                 float v = attrib.texcoords[2 * index.texcoord_index + 1];
                 currentGroup.textureCoords.append(QVector2D(u, v));
             }
+            // Добавление индексов вершин в currentGroup.indices
+            currentGroup.indices.append(currentGroup.vertices.size() - 1);
         }
     }
+
+    QVector3D center(0.0f, 0.0f, 0.0f);
+    for (const QVector3D& vertex : currentGroup.vertices) {
+        center += vertex;
+    }
+    center /= currentGroup.vertices.size();
+    currentGroup.center = center;
 
     if (!currentGroup.vertices.isEmpty()) {
         groups.append(currentGroup);
@@ -280,7 +308,7 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
     scaleFactor = 1;
   } else if (delta < 0) {
     // Уменьшаем масштаб при прокрутке назад
-    scaleFactor = -10;
+    scaleFactor = -1;
   }
 
   // Изменяем масштаб сцены

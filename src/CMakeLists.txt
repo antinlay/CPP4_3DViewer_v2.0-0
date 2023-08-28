@@ -11,19 +11,20 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(tinyobjloader)
-include_directories(tinyobjloader)
+add_subdirectory(./Model/tinyobjloader)
+include_directories(./Model/tinyobjloader)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets OpenGLWidgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets OpenGLWidgets)
 
 set(PROJECT_SOURCES
         main.cpp
-        view.cpp
-        view.h
-        view.ui
-        glwidget.h
-        glwidget.cpp
+        ./View/view.cpp
+        ./View/view.h
+        ./View/view.ui
+        ./Model/glwidget.h
+        ./Model/glwidget.cpp
+        ./Controller/controller.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

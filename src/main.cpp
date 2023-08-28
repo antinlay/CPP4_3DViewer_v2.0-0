@@ -1,4 +1,4 @@
-#include "view.h"
+#include "./View/view.h"
 
 int main(int argc, char *argv[]) {
   QApplication a(argc, argv);

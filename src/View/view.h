@@ -4,7 +4,7 @@
 #include <QFileDialog>
 
 #include "./ui_view.h"
-#include "glwidget.h"
+#include "../Model/glwidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
